@@ -1,7 +1,7 @@
 # Simple encryption utility for files/directories
 This script (en|de)crypts directories/files by using AES (CBC) algorithm. It also generates a new VI for each encryption.
 
-![pcrypt]()
+![pcrypt](https://user-images.githubusercontent.com/20663776/103232504-d9c8ed80-494f-11eb-9f99-dc4b30526c3b.png)
 
 
 # Usage

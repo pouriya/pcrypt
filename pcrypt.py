@@ -4,7 +4,6 @@ import struct
 import tarfile
 import os.path as path
 from os import urandom, remove
-from glob import glob
 from Crypto.Cipher import AES
 from hashlib import sha256
 
@@ -29,7 +28,7 @@ def _open_file(filename, mode):
     return fd
 
 
-def maybe_remove_file(filename):
+def _maybe_remove_file(filename):
     # It may take a while for large files
     while True:
         try:
@@ -43,11 +42,9 @@ def maybe_remove_file(filename):
         break
 
 
-def encrypt_file(key, input_filename, output_filename=None, chunk_size=None):
+def encrypt_file(key, input_filename, output_filename, chunk_size=None):
     if chunk_size is None:
         chunk_size = DEFAULT_CHUNCK_SIZE
-    if output_filename is None:
-        output_filename = input_filename + EXTENTION
 
     iv = urandom(16)
     encryptor = AES.new(key, AES.MODE_CBC, iv)
@@ -79,7 +76,7 @@ def encrypt_file(key, input_filename, output_filename=None, chunk_size=None):
             output_fd.write(encryptor.encrypt(chunk))
         except Exception as reason:
             # Probably 'no space left' exception
-            maybe_remove_file(output_filename)
+            _maybe_remove_file(output_filename)
             raise IOError('!Could not write to output file {!r}: {}'.format(output_filename))
         encrypted_size += chunk_length
         # 0xA00000: 10MB
@@ -96,14 +93,11 @@ def encrypt_file(key, input_filename, output_filename=None, chunk_size=None):
     print('{white}Encrypted{reset}'.format(**COLORS))
 
 
-def decrypt_file(key, input_filename, output_filename=None, chunk_size=None):
+def decrypt_file(key, input_filename, output_filename, chunk_size=None):
     if not input_filename.endswith(EXTENTION):
         raise ValueError('!The file {!r} is not encrypted by pcrypt'.format(input_filename))
     if chunk_size is None:
         chunk_size = DEFAULT_CHUNCK_SIZE
-    if output_filename is None:
-        # removes EXTENTION from the end of filename
-        output_filename = path.splitext(input_filename)[0]
     if path.exists(output_filename):
         raise ValueError('!Output file {!r} already exists'.format(output_filename))
     if not path.exists(input_filename):
@@ -134,7 +128,7 @@ def decrypt_file(key, input_filename, output_filename=None, chunk_size=None):
             output_fd.write(decryptor.decrypt(chunk))
         except Exception as reason:
             # Probably 'no space left' exception
-            maybe_remove_file(output_filename)
+            _maybe_remove_file(output_filename)
             raise IOError('!Could not write to output file {!r}: {}'.format(output_filename))
 
         decrypted_size += chunk_length
@@ -171,9 +165,7 @@ def make_tar_archive(filenames, output_filename, path_prefix):
     tar.close()
 
 
-def untar_archive(input_filename=None):
-    if input_filename is None:
-        input_filename = DEFAULT_ENCRYPTED_FILENAME
+def untar_archive(input_filename):
     try:
         tar = tarfile.open(input_filename)
     except Exception as reason:
@@ -207,6 +199,7 @@ if __name__ == '__main__':
     from os import getcwd
     from time import time
     from getpass import getpass
+    from glob import glob
 
 
     def read_password(show_password_in_prompt):
@@ -328,9 +321,9 @@ if __name__ == '__main__':
     except Exception as reason:
         reason_str = str(reason)
         if reason_str[0] != '!':
-            maybe_remove_file(tmp_tar_filename)
+            _maybe_remove_file(tmp_tar_filename)
             raise
         print('{red}{}{reset}'.format(reason_str[1:], **COLORS))
         status_code = 1
-    maybe_remove_file(tmp_tar_filename)
+    _maybe_remove_file(tmp_tar_filename)
     exit(status_code)

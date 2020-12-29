@@ -1,7 +1,7 @@
 # Simple encryption utility for files/directories
 This script (en|de)crypts directories/files by using AES (CBC) algorithm. It also generates a new VI for each encryption.
 
-![pcrypt](https://user-images.githubusercontent.com/20663776/103232504-d9c8ed80-494f-11eb-9f99-dc4b30526c3b.png)
+![pcrypt](https://user-images.githubusercontent.com/20663776/103262540-788a3400-49ba-11eb-9f6d-4f3db347d78c.png)
 
 
 # Usage
@@ -19,14 +19,14 @@ optional arguments:
                    be the directory that you want to encrypt all or one of its
                    files. Note that in encryption mode if -f is not set, it
                    encrypt all internal directories too. Its default value is
-                   current working directory or /p/test/pcrypt.
+                   current working directory or /p/test/A.
   -f FILE          The filename to (en|de)crypt.
   -D               Switchs to decryption mode. If -f is not set, It tries to
                    decrypt its default encrypted file name or
-                   'B1GS3CR3T.pcrypt'
+                   'b1gs3cr3t.pcrypt'
   -E               Switchs to encryption mode (which is the default
                    behaviour). The default encrypted file name for folders is
-                   'B1GS3CR3T.pcrypt'
+                   'b1gs3cr3t.pcrypt'
   --show-password  Shows your password when you type/paste it.
   --no-color       Makes it print plain text instead of colorized text.
 ```
@@ -38,5 +38,5 @@ You must have `python3` installed. Also if you want to use `clipboard` feature, 
 ```
 or
 ```sh
-~ $ curl -sSf https://raw.githubusercontent.com/pouriya/pcrypt/20.12.28/pcrypt.py > /usr/local/bin/pcrypt && chmod a+x /usr/local/bin/pcrypt
+~ $ curl -sSf https://raw.githubusercontent.com/pouriya/pcrypt/20.12.29/pcrypt.py > pcrypt && chmod a+x pcrypt && sudo cp pcrypt /usr/local/bin/pcrypt
 ```

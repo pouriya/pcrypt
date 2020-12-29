@@ -32,11 +32,11 @@ optional arguments:
 ```
 
 # Installation
-You must have `python3` installed. Also if you want to use `clipboard` feature, you must install `pyperclip` library too.  
+You must have `python3` installed.
 ```sh
 ~/path/to/cloned/ppg $ chmod a+x pcrypt.py && sudo ln -sf $PWD/pcrypt.py /usr/local/bin/pcrypt
 ```
 or
 ```sh
-~ $ curl -sSf https://raw.githubusercontent.com/pouriya/pcrypt/20.12.29/pcrypt.py > pcrypt && chmod a+x pcrypt && sudo cp pcrypt /usr/local/bin/pcrypt
+curl -sSf https://raw.githubusercontent.com/pouriya/pcrypt/20.12.29/pcrypt.py > pcrypt && chmod a+x pcrypt && sudo cp pcrypt /usr/local/bin/pcrypt
 ```

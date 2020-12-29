@@ -25,7 +25,7 @@ def _open_file(filename, mode):
     try:
         fd = open(filename, mode)
     except Exception as reason:
-        raise IOError('!Could not open file {!r}: {}'.format(input_filename))
+        raise IOError('!Could not open file {!r}: {}'.format(input_filename, reason))
     return fd
 
 

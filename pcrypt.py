@@ -10,7 +10,7 @@ from hashlib import sha256
 
 DEFAULT_CHUNCK_SIZE = 256 * 1024
 EXTENTION = '.pcrypt'
-DEFAULT_ENCRYPTED_FILENAME = 'B1GS3CR3T' + EXTENTION
+DEFAULT_ENCRYPTED_FILENAME = 'b1gs3cr3t' + EXTENTION
 COLORS = {
     'red':    '\033[1;31m',
     'white':  '\033[1;37m',

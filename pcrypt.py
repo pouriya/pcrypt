@@ -46,6 +46,8 @@ def encrypt_file(key, input_filename, output_filename, chunk_size=None):
     if chunk_size is None:
         chunk_size = DEFAULT_CHUNCK_SIZE
 
+    # This code is highly inspired by:
+    # https://eli.thegreenplace.net/2010/06/25/aes-encryption-of-files-in-python-with-pycrypto
     iv = urandom(16)
     encryptor = AES.new(key, AES.MODE_CBC, iv)
 
@@ -103,6 +105,8 @@ def decrypt_file(key, input_filename, output_filename, chunk_size=None):
     if not path.exists(input_filename):
         raise ValueError('!Could not found input file {!r}'.format(input_filename))
 
+    # This code is highly inspired by:
+    # https://eli.thegreenplace.net/2010/06/25/aes-encryption-of-files-in-python-with-pycrypto
     input_fd = _open_file(input_filename, 'rb')
     output_file_size = struct.unpack('<Q', input_fd.read(struct.calcsize('Q')))[0]
     iv = input_fd.read(16)

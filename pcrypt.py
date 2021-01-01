@@ -122,7 +122,7 @@ def decrypt_file(key, input_filename, output_filename, chunk_size=None):
             **COLORS
         )
     )
-    print('{gray}Printing a dot after encrypting each 10MB of data{reset}'.format(**COLORS))
+    print('{gray}Printing a dot after decrypting each 10MB of data{reset}'.format(**COLORS))
     while True:
         chunk = input_fd.read(chunk_size)
         chunk_length = len(chunk)
@@ -269,9 +269,9 @@ if __name__ == '__main__':
         default=getcwd(),
         dest='directory',
         help='In decryption mode it should be directory name that contains the encrypted file and' \
-        ' in encryption mode it should be the directory that you want to encrypt all or one of its' \
-        ' files. Note that in encryption mode if -f is not set, it encrypt all internal directori' \
-        'es too. Its default value is current working directory or %(default)s.'
+        ' in encryption mode it should be the directory that you want to encrypt all or one of it' \
+        's files. Note that in encryption mode if -f is not set, it encrypt all internal director' \
+        'ies too. Its default value is current working directory or %(default)s.'
     )
     parser.add_argument(
         '-f',

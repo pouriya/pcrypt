@@ -38,5 +38,5 @@ You must have `python3` installed.
 ```
 or
 ```sh
-curl -sSf https://raw.githubusercontent.com/pouriya/pcrypt/20.12.29/pcrypt.py > pcrypt && chmod a+x pcrypt && sudo cp pcrypt /usr/local/bin/pcrypt
+curl -sSf https://raw.githubusercontent.com/pouriya/pcrypt/21.01.01/pcrypt.py > pcrypt && chmod a+x pcrypt && sudo cp pcrypt /usr/local/bin/pcrypt
 ```

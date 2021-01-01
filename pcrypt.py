@@ -32,7 +32,9 @@ def _maybe_remove_file(filename):
     # It may take a while for large files
     while True:
         try:
-            path.exists(filename) and remove(filename) and print('{gray}Removed file {}{reset}'.format(filename, **COLORS))
+            path.exists(filename) and \
+            remove(filename)      and \
+            print('{gray}Removed file {}{reset}'.format(filename, **COLORS))
         except KeyboardInterrupt:
             print(
                 '{red}DO NOT TRY TO EXIT THE PROGRAM while it\'s removing its files{reset}'

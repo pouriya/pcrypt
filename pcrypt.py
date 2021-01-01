@@ -216,7 +216,7 @@ if __name__ == '__main__':
 
     def should_we_stop():
         return input(
-            '{white}Continue? [{yellow}y{reset}{white}/{reset}{yellow}n{reset}{white}]: {reset}'
+            '{white}Continue? [{yellow}y{reset}{white}/{reset}{yellow}N{reset}{white}]: {reset}'
             .format(**COLORS)
         ).lower() != 'y'
 
@@ -269,7 +269,7 @@ if __name__ == '__main__':
         default=getcwd(),
         dest='directory',
         help='In decryption mode it should be directory name that contains the encrypted file and' \
-        'in encryption mode it should be the directory that you want to encrypt all or one of its' \
+        ' in encryption mode it should be the directory that you want to encrypt all or one of its' \
         ' files. Note that in encryption mode if -f is not set, it encrypt all internal directori' \
         'es too. Its default value is current working directory or %(default)s.'
     )

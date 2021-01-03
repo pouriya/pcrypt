@@ -7,6 +7,8 @@ This script (en|de)crypts directories/files by using AES (CBC) algorithm. It als
 # Usage
 ```sh
 ~ $ pcrypt -h
+```
+```text
 usage: pcrypt [-h] [-d DIRECTORY] [-f FILE] [-D] [-E] [--show-password]
               [--no-color]
 
@@ -15,18 +17,18 @@ Simple encryption utility for files/directories
 optional arguments:
   -h, --help       show this help message and exit
   -d DIRECTORY     In decryption mode it should be directory name that
-                   contains the encrypted file andin encryption mode it should
-                   be the directory that you want to encrypt all or one of its
-                   files. Note that in encryption mode if -f is not set, it
-                   encrypt all internal directories too. Its default value is
-                   current working directory or /p/test/A.
+                   contains the encrypted file and in encryption mode it
+                   should be the directory that you want to encrypt all or one
+                   of its files. Note that in encryption mode if -f is not
+                   set, it encrypts all internal directories too. Its default
+                   value is current working directory or /p/pcrypt.
   -f FILE          The filename to (en|de)crypt.
   -D               Switchs to decryption mode. If -f is not set, It tries to
-                   decrypt its default encrypted file name or
+                   decrypt its default encrypted file name which is
                    'b1gs3cr3t.pcrypt'
   -E               Switchs to encryption mode (which is the default
-                   behaviour). The default encrypted file name for folders is
-                   'b1gs3cr3t.pcrypt'
+                   behaviour). The default encrypted file name for directories
+                   (when -f is not set) is 'b1gs3cr3t.pcrypt'
   --show-password  Shows your password when you type/paste it.
   --no-color       Makes it print plain text instead of colorized text.
 ```

@@ -8,6 +8,9 @@ from Crypto.Cipher import AES
 from hashlib import sha256
 
 
+__version__ = '20.01.03'
+
+
 DEFAULT_CHUNCK_SIZE = 256 * 1024
 EXTENTION = '.pcrypt'
 DEFAULT_ENCRYPTED_FILENAME = 'b1gs3cr3t' + EXTENTION
@@ -311,14 +314,24 @@ if __name__ == '__main__':
         dest='no_color',
         help='Makes it print plain text instead of colorized text.'
     )
+    parser.add_argument(
+        '-v',
+        action='store_true',
+        default=False,
+        dest='print_version_and_exit',
+        help='Prints version number ({}) and exits.'.format(__version__)
+    )
     args = parser.parse_args()
+    status_code = 0
+    if args.print_version_and_exit:
+        print(__version__)
+        exit(status_code)
     if args.encrypt and args.decrypt:
         parser.error('Using -E and -D with each other is not allowed')
     if args.no_color:
         COLORS = {x[0]: '' for x in COLORS.items()}
 
     tmp_tar_filename = str(int(time())) + '.tar.gz'
-    status_code = 0
     try:
         main(args, tmp_tar_filename)
     except KeyboardInterrupt:

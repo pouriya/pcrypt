@@ -34,7 +34,7 @@ optional arguments:
 # Installation
 You must have `python3` installed.
 ```sh
-~/path/to/cloned/ppg $ chmod a+x pcrypt.py && sudo ln -sf $PWD/pcrypt.py /usr/local/bin/pcrypt
+~/path/to/cloned/pcrypt $ chmod a+x pcrypt.py && sudo ln -sf $PWD/pcrypt.py /usr/local/bin/pcrypt
 ```
 or
 ```sh

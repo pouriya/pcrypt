@@ -272,8 +272,8 @@ if __name__ == '__main__':
         dest='directory',
         help='In decryption mode it should be directory name that contains the encrypted file and' \
         ' in encryption mode it should be the directory that you want to encrypt all or one of it' \
-        's files. Note that in encryption mode if -f is not set, it encrypt all internal director' \
-        'ies too. Its default value is current working directory or %(default)s.'
+        's files. Note that in encryption mode if -f is not set, it encrypts all internal directo' \
+        'ries too. Its default value is current working directory or %(default)s.'
     )
     parser.add_argument(
         '-f',
@@ -287,7 +287,7 @@ if __name__ == '__main__':
         default=False,
         dest='decrypt',
         help='Switchs to decryption mode. If -f is not set, It tries to decrypt its default encry' \
-        'pted file name or {!r}'.format(DEFAULT_ENCRYPTED_FILENAME)
+        'pted file name which is {!r}'.format(DEFAULT_ENCRYPTED_FILENAME)
     )
     parser.add_argument(
         '-E',
@@ -295,7 +295,7 @@ if __name__ == '__main__':
         default=False,
         dest='encrypt',
         help='Switchs to encryption mode (which is the default behaviour). The default encrypted ' \
-        'file name for folders is {!r}'.format(DEFAULT_ENCRYPTED_FILENAME)
+        'file name for directories (when -f is not set) is {!r}'.format(DEFAULT_ENCRYPTED_FILENAME)
     )
     parser.add_argument(
         '--show-password',

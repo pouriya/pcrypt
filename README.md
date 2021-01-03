@@ -31,6 +31,7 @@ optional arguments:
                    (when -f is not set) is 'b1gs3cr3t.pcrypt'
   --show-password  Shows your password when you type/paste it.
   --no-color       Makes it print plain text instead of colorized text.
+  -v               Prints version number (20.01.03) and exits.
 ```
 
 # Installation
@@ -40,8 +41,8 @@ You must have `python3` installed.
 ```
 or
 ```sh
-curl -sSf https://raw.githubusercontent.com/pouriya/pcrypt/21.01.03/pcrypt.py > pcrypt && \ 
+curl -sSf https://raw.githubusercontent.com/pouriya/pcrypt/21.01.03/pcrypt.py > pcrypt && \
 chmod a+x pcrypt                                                                       && \
-sudo cp pcrypt /usr/local/bin/pcrypt                                                   && \
+sudo mv pcrypt /usr/local/bin/pcrypt                                                   && \
 pcrypt -v
 ```

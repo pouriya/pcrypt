@@ -21,10 +21,10 @@ optional arguments:
                    encrypt all internal directories too. Its default value is
                    current working directory or /p/test/A.
   -f FILE          The filename to (en|de)crypt.
-  -D               Switchs to decryption mode. If -f is not set, It tries to
+  -D               Switches to decryption mode. If -f is not set, It tries to
                    decrypt its default encrypted file name or
                    'b1gs3cr3t.pcrypt'
-  -E               Switchs to encryption mode (which is the default
+  -E               Switches to encryption mode (which is the default
                    behaviour). The default encrypted file name for folders is
                    'b1gs3cr3t.pcrypt'
   --show-password  Shows your password when you type/paste it.
@@ -38,5 +38,5 @@ You must have `python3` installed.
 ```
 or
 ```sh
-curl -sSf https://raw.githubusercontent.com/pouriya/pcrypt/21.01.01/pcrypt.py > pcrypt && chmod a+x pcrypt && sudo cp pcrypt /usr/local/bin/pcrypt
+$ curl -sSf https://raw.githubusercontent.com/pouriya/pcrypt/21.6.15/pcrypt.py > pcrypt && chmod a+x pcrypt && ./pcrypt -v && sudo cp pcrypt /usr/local/bin/pcrypt
 ```

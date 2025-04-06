@@ -1,0 +1,30 @@
+[package]
+name = "pcrypt"
+version = "1.0.0"
+edition = "2021"
+authors = ["pouriya.jahanbakhsh@gmail.com"]
+description = "A utility to Archive (zip) + Encrypt (AES-256) + Compress (Zstd) directory files and vice versa"
+
+[dependencies]
+# Commandline argument parser:
+clap = {version = "4.5.35", default-features = false, features = ["std", "derive", "help", "error-context"]}
+# Zip & AES & Zstd:
+zip = {version = "2.6.1", default-features=false, features = ["aes-crypto", "zstd", "bzip2"]}
+# Time library to create archive filenames:
+chrono = {version = "0.4.40", features = ["std"]}
+# Progressbars:
+indicatif = "0.17.11"
+# Signal handler to detect Ctrl+C:
+ctrlc = "3.4.6"
+# To Read input password:
+rpassword = "7.3.1"
+# Error handling:
+thiserror = "2.0.12"
+anyhow = "1.0.97"
+
+[features]
+default = []
+password-from-env = []
+
+[profile.release]
+opt-level = 3

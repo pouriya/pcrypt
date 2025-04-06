@@ -1,42 +1,76 @@
-# Simple encryption utility for files/directories
-This script (en|de)crypts directories/files by using AES (CBC) algorithm. It also generates a new VI for each encryption.
+# PCrypt
+A utility to Archive (zip) + Encrypt (AES-256) + Compress (Zstd) directory files and vice versa
 
-![pcrypt](https://user-images.githubusercontent.com/20663776/103262540-788a3400-49ba-11eb-9f6d-4f3db347d78c.png)
+![pcrypt](https://github.com/user-attachments/assets/140c4ba1-bc08-41f9-8ea2-ee0f9adfbf70)
 
 
 # Usage
 ```sh
-~ $ pcrypt -h
-usage: pcrypt [-h] [-d DIRECTORY] [-f FILE] [-D] [-E] [--show-password]
-              [--no-color]
-
-Simple encryption utility for files/directories
-
-optional arguments:
-  -h, --help       show this help message and exit
-  -d DIRECTORY     In decryption mode it should be directory name that
-                   contains the encrypted file andin encryption mode it should
-                   be the directory that you want to encrypt all or one of its
-                   files. Note that in encryption mode if -f is not set, it
-                   encrypt all internal directories too. Its default value is
-                   current working directory or /p/test/A.
-  -f FILE          The filename to (en|de)crypt.
-  -D               Switches to decryption mode. If -f is not set, It tries to
-                   decrypt its default encrypted file name or
-                   'b1gs3cr3t.pcrypt'
-  -E               Switches to encryption mode (which is the default
-                   behaviour). The default encrypted file name for folders is
-                   'b1gs3cr3t.pcrypt'
-  --show-password  Shows your password when you type/paste it.
-  --no-color       Makes it print plain text instead of colorized text.
+~ $ pcrypt --help
 ```
+```text
+A utility to Archive (zip) + Encrypt (AES-256) + Compress (Zstd) directory files and vice versa
+
+Usage: 
+
+Commands:
+  archive  Archive + Encrypt + Compress files of an input directory (only first level of files)
+  extract  Extract + Decrypt + Decompress contents of an archive file
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+```
+
+### Archive Usage
+```sh
+~ $ pcrypt archive --help 
+```
+```text
+Archive + Encrypt + Compress files of an input directory (only first level of files)
+
+Usage: 
+
+Arguments:
+  <DIRECTORY>
+          Directory path to archive
+
+Options:
+  -z <ZSTD_COMPRESSION_LEVEL>
+          Zstd compression level (between -7 - 22)
+          
+          [default: 7]
+
+      --compression-method <COMPRESSION_METHOD>
+          Compression method
+          
+          [default: zstd]
+
+          Possible values:
+          - zstd:  Fast and efficeint but (for now) you have to decompress archives only using this app
+          - bzip2: VERY SLOW (compared to `zstd`), but you can decompress archive via well-known tools like 7z
+
+  -h, --help
+          Print help (see a summary with '-h')
+```
+
+### Extract Usage
+```sh
+~ $ pcrypt extract --help
+```
+```text
+Extract + Decrypt + Decompress contents of an archive file
+
+Usage: 
+
+Arguments:
+  <ARCHIVED_FILE>  Archived .pcrypt.zip file path to extract
+
+Options:
+  -h, --help  Print help
+```
+
 
 # Installation
-You must have `python3` installed.
-```sh
-~/path/to/cloned/ppg $ chmod a+x pcrypt.py && sudo ln -sf $PWD/pcrypt.py /usr/local/bin/pcrypt
-```
-or
-```sh
-$ curl -sSf https://raw.githubusercontent.com/pouriya/pcrypt/21.6.15/pcrypt.py > pcrypt && chmod a+x pcrypt && ./pcrypt -v && sudo cp pcrypt /usr/local/bin/pcrypt
-```
+You need to install Rust toolchain and clone & build the repo for now (or wait for GitHub Actions).

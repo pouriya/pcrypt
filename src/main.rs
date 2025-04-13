@@ -3,12 +3,16 @@ use clap::{Parser, Subcommand, ValueEnum};
 use std::{
     fs,
     io::{BufReader, Error as IoError, Read, Write},
-    os::unix::fs::MetadataExt,
     path::{Path, PathBuf},
     sync::{atomic, Arc},
     time::SystemTime,
 };
 use zip::result::ZipError;
+
+#[cfg(not(target_os = "windows"))]
+use std::os::unix::fs::MetadataExt;
+#[cfg(target_os = "windows")]
+use std::os::windows::fs::MetadataExt;
 
 const ZSTD_COMPRESSION_LEVEL: i64 = 7;
 const PROGRESSBAR_TEMPLATE: &str =
@@ -313,9 +317,15 @@ fn archive<D: AsRef<Path>>(
                 })?;
             is_running(&running)?;
 
+            #[cfg(not(target_os = "windows"))]
             let file_size = file
                 .metadata()
                 .map(|metadata| metadata.size())
+                .unwrap_or_default();
+            #[cfg(target_os = "windows")]
+            let file_size = file
+                .metadata()
+                .map(|metadata| metadata.file_size())
                 .unwrap_or_default();
             let progress_bar = indicatif::ProgressBar::new(file_size)
                 .with_message(reduce_to_30_characters(filename));

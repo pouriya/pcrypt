@@ -18,6 +18,10 @@ const ZSTD_COMPRESSION_LEVEL: i64 = 7;
 const PROGRESSBAR_TEMPLATE: &str =
     "{msg:<30} | [{elapsed_precise:^8}] | {bytes:>11}/{total_bytes:<11} | ~{eta:^6} | [{wide_bar}]";
 const PROGRESSBAR_BAR_CHARACTERS: &str = "=>-";
+#[cfg(not(target_os = "windows"))]
+const READ_WRITE_BUFFER_SIZE: usize = 1048576;
+#[cfg(target_os = "windows")]
+const READ_WRITE_BUFFER_SIZE: usize = 524288;
 
 #[derive(Parser, Debug)]
 #[command(version, about, author, long_about = None)]
@@ -335,7 +339,7 @@ fn archive<D: AsRef<Path>>(
                     .progress_chars(PROGRESSBAR_BAR_CHARACTERS),
             );
             let progress_bar = multi_progress_bar.add(progress_bar);
-            let mut buffer: [u8; 1048576] = [0; 1048576];
+            let mut buffer: [u8; READ_WRITE_BUFFER_SIZE] = [0; READ_WRITE_BUFFER_SIZE];
             is_running(&running)?;
 
             loop {
@@ -460,7 +464,7 @@ fn extract<F: AsRef<Path>>(
                     .progress_chars(PROGRESSBAR_BAR_CHARACTERS),
             );
             let progress_bar = multi_progress_bar.add(progress_bar);
-            let mut buffer: [u8; 1048576] = [0; 1048576];
+            let mut buffer: [u8; READ_WRITE_BUFFER_SIZE] = [0; READ_WRITE_BUFFER_SIZE];
             is_running(&running)?;
             loop {
                 let bytes_read =

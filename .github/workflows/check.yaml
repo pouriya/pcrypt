@@ -22,44 +22,47 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            name: macOS latest (x86-64)
-          - os: macos-11
-            target: x86_64-apple-darwin
-            name: macOS 11 (x86-64)
-          - os: macos-12
-            target: x86_64-apple-darwin
-            name: macOS 12 (x86-64)
           - os: macos-13
             target: x86_64-apple-darwin
             name: macOS 13 (x86-64)
+          - os: macos-14
+            target: x86_64-apple-darwin
+            name: macOS 14 (x86-64)
+          - os: macos-15
+            target: x86_64-apple-darwin
+            name: macOS 15 (x86-64)
 
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
-            name: Ubuntu latest GNU (x86-64)
-          - os: ubuntu-latest
+            name: Ubuntu 22.04 GNU (x86-64)
+          - os: ubuntu-22.04
             target: x86_64-unknown-linux-musl
-            name: Ubuntu latest Musl (x86-64)
-          - os: ubuntu-20.04
+            name: Ubuntu 22.04 Musl (x86-64)
+          - os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
-            name: Ubuntu 20.04 GNU (x86-64)
-          - os: ubuntu-20.04
+            name: Ubuntu 24.04 GNU (x86-64)
+          - os: ubuntu-24.04
             target: x86_64-unknown-linux-musl
-            name: Ubuntu 20.04 Musl (x86-64)
+            name: Ubuntu 24.04 Musl (x86-64)
 
-          - os: windows-latest
-            target: x86_64-pc-windows-gnu
-            name: Windows latest GNU (x86-64)
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            name: Windows latest MSVC (x86-64)
           - os: windows-2019
             target: x86_64-pc-windows-gnu
             name: Windows 2019 GNU (x86-64)
           - os: windows-2019
             target: x86_64-pc-windows-msvc
             name: Windows 2019 MSVC (x86-64)
+          - os: windows-2022
+            target: x86_64-pc-windows-gnu
+            name: Windows 2022 GNU (x86-64)
+          - os: windows-2022
+            target: x86_64-pc-windows-msvc
+            name: Windows 2022 MSVC (x86-64)
+          - os: windows-2025
+            target: x86_64-pc-windows-gnu
+            name: Windows 2025 GNU (x86-64)
+          - os: windows-2025
+            target: x86_64-pc-windows-msvc
+            name: Windows 2025 MSVC (x86-64)
 
     steps:
       - uses: actions/checkout@v4
@@ -85,14 +88,13 @@ jobs:
       - name: Lint
         run: make fmt TARGET=${{ matrix.target }}
 
-      - name: Build
-        run: |
-          make dev TARGET=${{ matrix.target }}
-          mv pcrypt pcrypt-${{ matrix.os }}-${{ matrix.target }}
-
       - name: Test
         run: |
-          make test TARGET=${{ matrix.target }}
+          make test TARGET=${{ matrix.target }} EXE=pcrypt-${{ matrix.os }}-${{ matrix.target }}
+      
+      - name: Build
+        run: |
+          make prod TARGET=${{ matrix.target }} EXE=pcrypt-${{ matrix.os }}-${{ matrix.target }}
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v4

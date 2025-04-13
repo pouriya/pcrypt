@@ -1,11 +1,12 @@
 TARGET=$(shell rustup target list | grep 'installed' | awk '$$1 != "" {print $$1; exit}')
+EXE=pcrypt
 
 all: dev fmt clippy test prod
 
 dev:
 	cargo build --features password-from-env --target ${TARGET}
-	@ cp ./target/${TARGET}/debug/pcrypt .
-	@ echo "Built ./`./pcrypt -V` dev"
+	@ cp ./target/${TARGET}/debug/pcrypt ./${EXE}
+	@ echo "Built pcrypt dev"
 
 fmt:
 	cargo fmt --check
@@ -20,9 +21,9 @@ test: dev
 	openssl rand -base64 -out test/contents/file.txt 36700160 # 35MB
 	openssl rand -base64 -out test/contents/txt.file 36700160
 	mkdir -p test/contents/ignore && echo XYZ > test/contents/ignore/ignored.txt
-	cd test && PCRYPT_PASSWORD="P" ../pcrypt archive -z=-7 contents
+	cd test && PCRYPT_PASSWORD="P" ../${EXE} archive -z=-7 contents
 	mv test/contents*.pcrypt.zip test/archived.pcrypt.zip
-	cd test/decrypted && PCRYPT_PASSWORD="P" ../../pcrypt extract ../archived.pcrypt.zip
+	cd test/decrypted && PCRYPT_PASSWORD="P" ../../${EXE} extract ../archived.pcrypt.zip
 	cmp test/contents/file.txt test/decrypted/file.txt
 	cmp test/contents/txt.file test/decrypted/txt.file
 	@ if [ -d "test/decrypted/ignore" ]; then echo "ignore directory exists"; exit 1; fi
@@ -30,7 +31,7 @@ test: dev
 
 prod:
 	cargo build --release --target ${TARGET}
-	@ cp ./target/${TARGET}/release/pcrypt .
-	@ echo "Built ./`./pcrypt -V` production" 
+	@ cp ./target/${TARGET}/release/pcrypt ./${EXE}
+	@ echo "Built pcrypt production"
 
 .PHONY: all dev fmt clippy test prod

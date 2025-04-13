@@ -1,0 +1,101 @@
+name: Check
+
+on:
+  push:
+    tags-ignore:
+      - "*.*.*"
+    paths-ignore:
+      - "**.md"
+    branches-ignore:
+      - "documentation"
+  pull_request:
+    branches:
+      - "master"
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            name: macOS latest (x86-64)
+          - os: macos-11
+            target: x86_64-apple-darwin
+            name: macOS 11 (x86-64)
+          - os: macos-12
+            target: x86_64-apple-darwin
+            name: macOS 12 (x86-64)
+          - os: macos-13
+            target: x86_64-apple-darwin
+            name: macOS 13 (x86-64)
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            name: Ubuntu latest GNU (x86-64)
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            name: Ubuntu latest Musl (x86-64)
+          - os: ubuntu-20.04
+            target: x86_64-unknown-linux-gnu
+            name: Ubuntu 20.04 GNU (x86-64)
+          - os: ubuntu-20.04
+            target: x86_64-unknown-linux-musl
+            name: Ubuntu 20.04 Musl (x86-64)
+
+          - os: windows-latest
+            target: x86_64-pc-windows-gnu
+            name: Windows latest GNU (x86-64)
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            name: Windows latest MSVC (x86-64)
+          - os: windows-2019
+            target: x86_64-pc-windows-gnu
+            name: Windows 2019 GNU (x86-64)
+          - os: windows-2019
+            target: x86_64-pc-windows-msvc
+            name: Windows 2019 MSVC (x86-64)
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installing macOS dependencies
+        if: contains(matrix.os, 'macos-')
+        run: |
+          brew install openssl@1.1
+          brew install make
+          rustup target add ${{ matrix.target }}
+      - name: Installing Windows dependencies
+        if: contains(matrix.os, 'windows-')
+        run: |
+          rustup target add ${{ matrix.target }}
+      - name: Installing Linux dependencies for `musl`
+        if: contains(matrix.os, 'ubuntu-') && contains(matrix.target, '-musl')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y -qq musl-dev musl-tools
+          rustup target add ${{ matrix.target }}
+
+      - name: Lint
+        run: make fmt TARGET=${{ matrix.target }}
+
+      - name: Build
+        run: |
+          make dev TARGET=${{ matrix.target }}
+          mv pcrypt pcrypt-${{ matrix.os }}-${{ matrix.target }}
+
+      - name: Test
+        run: |
+          make test TARGET=${{ matrix.target }}
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pcrypt-${{ matrix.os }}-${{ matrix.target }}
+          path: ./pcrypt-*
+          retention-days: 10

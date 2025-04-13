@@ -73,4 +73,4 @@ Options:
 
 
 # Installation
-You need to install Rust toolchain and clone & build the repo for now (or wait for GitHub Actions).
+Download & Extract (& `chmod` on unix) executables from [Release page](https://github.com/pouriya/pcrypt/releases).

@@ -8,6 +8,7 @@ WORKDIR /pcrypt
 COPY src src
 COPY Cargo.toml .
 COPY Cargo.lock .
+COPY build.rs .
 COPY Makefile .
 
 RUN make release

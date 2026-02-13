@@ -5,7 +5,7 @@ use std::{
     io::{BufReader, Error as IoError, Read, Write},
     path::{Path, PathBuf},
     sync::{atomic, Arc},
-    time::SystemTime,
+    time::{Duration, Instant, SystemTime},
 };
 use zip::result::ZipError;
 
@@ -195,6 +195,20 @@ fn is_running(running: &Arc<atomic::AtomicBool>) -> Result<()> {
     }
 }
 
+fn format_duration(d: Duration) -> String {
+    let secs = d.as_secs();
+    let millis = d.subsec_millis();
+    if secs >= 60 {
+        let mins = secs / 60;
+        let s = secs % 60;
+        format!("{}m {}s", mins, s)
+    } else if secs > 0 {
+        format!("{}.{:03} s", secs, millis)
+    } else {
+        format!("{} ms", d.as_millis())
+    }
+}
+
 #[inline(always)]
 fn reduce_to_30_characters<P: AsRef<Path>>(x: P) -> String {
     let x = x.as_ref().to_str().unwrap_or_default().to_string();
@@ -308,12 +322,18 @@ fn archive<D: AsRef<Path>>(
         file_list.len()
     ));
     is_running(&running)?;
+    let total_input_bytes: u64 = file_list
+        .iter()
+        .filter_map(|(path, _)| fs::metadata(path).ok())
+        .map(|m| m.len())
+        .sum();
     let password = read_password(true)?;
     println!(
         "Attempt to Archive + Encrypt + Compress {} file(s) into {pcrypt_filename:?}",
         file_list.len()
     );
 
+    let archive_start = Instant::now();
     let pcrypt_file = fs::File::create(&pcrypt_filename).map_err(|error| Error::CreateFile {
         filename: pcrypt_filename.clone(),
         source: error,
@@ -394,6 +414,26 @@ fn archive<D: AsRef<Path>>(
         let _ = fs::remove_file(&pcrypt_filename);
         Error::ZipArchive { source: error }
     })?;
+
+    let archive_elapsed = archive_start.elapsed();
+    let output_bytes = fs::metadata(&pcrypt_filename).map(|m| m.len()).unwrap_or(0);
+    let elapsed_secs = archive_elapsed.as_secs_f64();
+    let speed_mbs = if elapsed_secs > 0.0 && total_input_bytes > 0 {
+        (total_input_bytes as f64 / 1_000_000.0) / elapsed_secs
+    } else {
+        0.0
+    };
+    let compression_ratio_pct = if total_input_bytes > 0 {
+        (1.0 - (output_bytes as f64 / total_input_bytes as f64)) * 100.0
+    } else {
+        0.0
+    };
+    println!(
+        "Encryption/Compression: {:.2} MB/s | size reduced by {:.1}% | total time {}",
+        speed_mbs,
+        compression_ratio_pct,
+        format_duration(archive_elapsed)
+    );
     Ok(())
 }
 
@@ -443,6 +483,9 @@ fn extract<F: AsRef<Path>>(
             filename: archived_filename.clone(),
         });
     };
+    let archive_input_bytes = fs::metadata(&archived_filename)
+        .map(|m| m.len())
+        .unwrap_or(0);
     is_running(&running)?;
     (0..archive.len()).try_for_each(|index| {
         let archive_file = archive.by_index_raw(index).unwrap();
@@ -478,8 +521,10 @@ fn extract<F: AsRef<Path>>(
             "Attempt to Extract + Decrypt + Decompress {} files from {archived_filename:?}",
             archive.len()
         );
+        let extract_start = Instant::now();
         let multi_progress_bar = indicatif::MultiProgress::new();
         let mut file_list = Vec::with_capacity(archive.len());
+        let mut total_output_bytes: u64 = 0;
         for index in 0..archive.len() {
             let archive_filename = archive.by_index_raw(index).unwrap().mangled_name();
             let mut archive_file = match archive.by_index_decrypt(index, password.as_bytes()) {
@@ -526,6 +571,7 @@ fn extract<F: AsRef<Path>>(
                 }
             };
             file_list.push(archive_filename.clone());
+            total_output_bytes += archive_file.size();
             if let Err(error) = is_running(&running) {
                 file_list.into_iter().for_each(|filename| {
                     let _ = fs::remove_file(&filename);
@@ -592,6 +638,24 @@ fn extract<F: AsRef<Path>>(
                 }
             }
         }
+        let extract_elapsed = extract_start.elapsed();
+        let elapsed_secs = extract_elapsed.as_secs_f64();
+        let speed_mbs = if elapsed_secs > 0.0 && total_output_bytes > 0 {
+            (total_output_bytes as f64 / 1_000_000.0) / elapsed_secs
+        } else {
+            0.0
+        };
+        let decompression_ratio_pct = if archive_input_bytes > 0 {
+            ((total_output_bytes as f64 / archive_input_bytes as f64) - 1.0) * 100.0
+        } else {
+            0.0
+        };
+        println!(
+            "Decompression/Decryption: {:.2} MB/s | size enlarged by {:.1}% | total time {}",
+            speed_mbs,
+            decompression_ratio_pct,
+            format_duration(extract_elapsed)
+        );
         return Ok(());
     }
 }

@@ -1,0 +1,14 @@
+# Build artifacts
+target/
+build/
+
+# Git and CI
+.git
+.github
+
+# Test artifacts
+test/
+
+# Ignore other repo cruft
+*.md
+.env*

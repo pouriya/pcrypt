@@ -1,0 +1,120 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write   # create release and upload assets
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            use_host_target: true
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            use_host_target: false
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            use_host_target: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install make (Windows)
+        if: matrix.os == 'windows-latest'
+        run: choco install make -y
+        shell: pwsh
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.use_host_target != true && matrix.target || '' }}
+
+      - name: Install system deps (Linux musl)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools curl
+          rustup target add x86_64-unknown-linux-musl
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.os }}-${{ matrix.target }}
+
+      - name: Build
+        shell: bash
+        run: |
+          if [ "${{ matrix.use_host_target }}" = "true" ]; then
+            make release
+          else
+            make release TARGET=${{ matrix.target }}
+          fi
+
+      - name: Rename and upload artifact
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          BUILD_DIR=build
+          VERSION=$(awk -F'"' '/^version = /{print $2; exit}' Cargo.toml)
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            EXT=".exe"
+          else
+            EXT=""
+          fi
+          SRC=$(echo ${BUILD_DIR}/pcrypt-*-${TARGET}${EXT})
+          if [ ! -f "$SRC" ]; then
+            echo "Build artifact not found: $SRC"
+            exit 1
+          fi
+          if [ "${TAG}" = "latest" ]; then
+            DST="pcrypt-${TARGET}${EXT}"
+          else
+            DST="pcrypt-${VERSION}-${TARGET}${EXT}"
+          fi
+          cp "$SRC" "$DST"
+          echo "artifact_path=${DST}" >> $GITHUB_OUTPUT
+        id: artifact
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pcrypt-${{ matrix.target }}
+          path: ${{ steps.artifact.outputs.artifact_path }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*'
+          merge-multiple: true
+          path: release-assets
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

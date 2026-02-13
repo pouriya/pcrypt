@@ -23,8 +23,11 @@ const READ_WRITE_BUFFER_SIZE: usize = 1048576;
 #[cfg(target_os = "windows")]
 const READ_WRITE_BUFFER_SIZE: usize = 524288;
 
+// Application version from Cargo.toml [workspace.metadata.ci-tools]
+const APPLICATION_VERSION: &str = env!("APPLICATION_VERSION");
+
 #[derive(Parser, Debug)]
-#[command(version, about, author, long_about = None)]
+#[command(version = APPLICATION_VERSION, about, author, long_about = None)]
 struct CommandLineOptions {
     #[command(subcommand)]
     command: Commands,
@@ -104,6 +107,12 @@ pub enum Error {
     Stopped,
     #[error("Could not read user password from input")]
     ReadPassword { source: IoError },
+    #[error("Passwords do not match")]
+    PasswordMismatch,
+    #[error("Password is empty")]
+    PasswordEmpty,
+    #[error("Invalid password")]
+    InvalidPassword,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -116,16 +125,35 @@ fn main() -> anyhow::Result<()> {
         eprintln!("Could not setup Ctrl-C handler: {error}")
     };
     #[cfg(not(feature = "password-from-env"))]
-    let password_func = || -> Result<String> {
-        rpassword::prompt_password("Enter Password: ")
-            .map_err(|error| Error::ReadPassword { source: error })
+    let password_func = |with_confirmation: bool| -> Result<String> {
+        let first_password = rpassword::prompt_password("Enter Password: ")
+            .map_err(|error| Error::ReadPassword { source: error })?;
+        if with_confirmation {
+            let second_password = rpassword::prompt_password("Enter Password again: ")
+                .map_err(|error| Error::ReadPassword { source: error })?;
+            if first_password != second_password {
+                return Err(Error::PasswordMismatch);
+            }
+        }
+        if first_password.is_empty() {
+            return Err(Error::PasswordEmpty);
+        }
+        Ok(first_password)
     };
     // For test environment:
     #[cfg(feature = "password-from-env")]
-    let password_func = || -> Result<String> {
-        std::env::var("PCRYPT_PASSWORD").map_err(|error| Error::ReadPassword {
-            source: std::io::Error::new(std::io::ErrorKind::NotFound, error),
-        })
+    let password_func = |_with_confirmation: bool| -> Result<String> {
+        match std::env::var("PCRYPT_PASSWORD") {
+            Ok(password) => {
+                if password.is_empty() {
+                    return Err(Error::PasswordEmpty);
+                }
+                Ok(password)
+            }
+            Err(error) => Err(Error::ReadPassword {
+                source: std::io::Error::new(std::io::ErrorKind::NotFound, error),
+            }),
+        }
     };
     match commandline_options.command {
         Commands::Archive {
@@ -186,7 +214,7 @@ fn archive<D: AsRef<Path>>(
     zstd_compression_level: i64,
     compression_method: CompressionMethod,
     running: Arc<atomic::AtomicBool>,
-    read_password: impl Fn() -> Result<String>,
+    read_password: impl Fn(bool) -> Result<String>,
 ) -> Result<()> {
     let directory = directory.as_ref();
     let directory = directory
@@ -280,7 +308,7 @@ fn archive<D: AsRef<Path>>(
         file_list.len()
     ));
     is_running(&running)?;
-    let password = read_password()?;
+    let password = read_password(true)?;
     println!(
         "Attempt to Archive + Encrypt + Compress {} file(s) into {pcrypt_filename:?}",
         file_list.len()
@@ -372,7 +400,7 @@ fn archive<D: AsRef<Path>>(
 fn extract<F: AsRef<Path>>(
     archived_filename: F,
     running: Arc<atomic::AtomicBool>,
-    read_password: impl Fn() -> Result<String>,
+    read_password: impl Fn(bool) -> Result<String>,
 ) -> Result<()> {
     let archived_filename = archived_filename.as_ref();
     let archived_filename =
@@ -427,33 +455,84 @@ fn extract<F: AsRef<Path>>(
         Ok(())
     })?;
     is_running(&running)?;
-    let password = read_password()?;
-    println!(
-        "Attempt to Extract + Decrypt + Decompress {} files from {archived_filename:?}",
-        archive.len()
-    );
 
-    let multi_progress_bar = indicatif::MultiProgress::new();
-    let mut file_list = Vec::with_capacity(archive.len());
-    (0..archive.len())
-        .try_for_each(|index| {
+    let mut read_password_attempts = 0;
+    'password_loop: loop {
+        let password = match read_password(false) {
+            Ok(password) => password,
+            Err(Error::ReadPassword { source }) => {
+                return Err(Error::ReadPassword { source });
+            }
+            Err(error) => {
+                println!("Error reading password: {error}");
+                read_password_attempts += 1;
+                if read_password_attempts >= 3 {
+                    eprintln!("Too many attempts to read password, exiting...");
+                    return Err(error);
+                }
+                continue;
+            }
+        };
+
+        println!(
+            "Attempt to Extract + Decrypt + Decompress {} files from {archived_filename:?}",
+            archive.len()
+        );
+        let multi_progress_bar = indicatif::MultiProgress::new();
+        let mut file_list = Vec::with_capacity(archive.len());
+        for index in 0..archive.len() {
             let archive_filename = archive.by_index_raw(index).unwrap().mangled_name();
-            let mut archive_file = archive
-                .by_index_decrypt(index, password.as_bytes())
-                .map_err(|error| Error::ZipRead {
-                    filename: archive_filename.clone(),
-                    source: error,
-                })?;
-            let mut file = fs::OpenOptions::new()
+            let mut archive_file = match archive.by_index_decrypt(index, password.as_bytes()) {
+                Ok(archive_file) => archive_file,
+                Err(ZipError::InvalidPassword) => {
+                    println!("Invalid password, trying again...");
+                    read_password_attempts += 1;
+                    if read_password_attempts >= 3 {
+                        eprintln!("Too many attempts to read password, exiting...");
+                        file_list.into_iter().for_each(|filename| {
+                            let _ = fs::remove_file(&filename);
+                            eprintln!("Removed extracted file {filename:?}");
+                        });
+                        return Err(Error::InvalidPassword);
+                    }
+                    continue 'password_loop;
+                }
+                Err(error) => {
+                    file_list.into_iter().for_each(|filename| {
+                        let _ = fs::remove_file(&filename);
+                        eprintln!("Removed extracted file {filename:?}");
+                    });
+                    return Err(Error::ZipRead {
+                        filename: archive_filename.clone(),
+                        source: error,
+                    });
+                }
+            };
+            let mut file = match fs::OpenOptions::new()
                 .create_new(true)
                 .write(true)
                 .open(&archive_filename)
-                .map_err(|error| Error::CreateFile {
-                    filename: archive_filename.clone(),
-                    source: error,
-                })?;
+            {
+                Ok(file) => file,
+                Err(error) => {
+                    file_list.into_iter().for_each(|filename| {
+                        let _ = fs::remove_file(&filename);
+                        eprintln!("Removed extracted file {filename:?}");
+                    });
+                    return Err(Error::CreateFile {
+                        filename: archive_filename.clone(),
+                        source: error,
+                    });
+                }
+            };
             file_list.push(archive_filename.clone());
-            is_running(&running)?;
+            if let Err(error) = is_running(&running) {
+                file_list.into_iter().for_each(|filename| {
+                    let _ = fs::remove_file(&filename);
+                    eprintln!("Removed extracted file {filename:?}");
+                });
+                return Err(error);
+            }
 
             let file_size = archive_file.size();
             let progress_bar = indicatif::ProgressBar::new(file_size)
@@ -465,34 +544,54 @@ fn extract<F: AsRef<Path>>(
             );
             let progress_bar = multi_progress_bar.add(progress_bar);
             let mut buffer: [u8; READ_WRITE_BUFFER_SIZE] = [0; READ_WRITE_BUFFER_SIZE];
-            is_running(&running)?;
+            if let Err(error) = is_running(&running) {
+                file_list.into_iter().for_each(|filename| {
+                    let _ = fs::remove_file(&filename);
+                    eprintln!("Removed extracted file {filename:?}");
+                });
+                return Err(error);
+            }
             loop {
-                let bytes_read =
-                    archive_file
-                        .read(&mut buffer)
-                        .map_err(|error| Error::ReadFile {
+                let bytes_read = match archive_file.read(&mut buffer) {
+                    Ok(bytes_read) => bytes_read,
+                    Err(error) => {
+                        file_list.into_iter().for_each(|filename| {
+                            let _ = fs::remove_file(&filename);
+                            eprintln!("Removed extracted file {filename:?}");
+                        });
+                        return Err(Error::ReadFile {
                             filename: archive_filename.clone(),
                             source: error,
-                        })?;
+                        });
+                    }
+                };
                 progress_bar.inc(bytes_read as u64);
                 if bytes_read == 0 {
                     progress_bar.finish();
                     break;
                 }
-                file.write_all(&buffer[0..bytes_read])
-                    .map_err(|error| Error::WriteFile {
-                        filename: archive_filename.clone(),
-                        source: error,
-                    })?;
-                is_running(&running)?;
+                match file.write_all(&buffer[0..bytes_read]) {
+                    Ok(()) => (),
+                    Err(error) => {
+                        file_list.into_iter().for_each(|filename| {
+                            let _ = fs::remove_file(&filename);
+                            eprintln!("Removed extracted file {filename:?}");
+                        });
+                        return Err(Error::WriteFile {
+                            filename: archive_filename.clone(),
+                            source: error,
+                        });
+                    }
+                }
+                if let Err(error) = is_running(&running) {
+                    file_list.into_iter().for_each(|filename| {
+                        let _ = fs::remove_file(&filename);
+                        eprintln!("Removed extracted file {filename:?}");
+                    });
+                    return Err(error);
+                }
             }
-            Ok(())
-        })
-        .inspect_err(|_| {
-            file_list.into_iter().for_each(|filename| {
-                let _ = fs::remove_file(&filename);
-                eprintln!("Removed extracted file {filename:?}");
-            });
-        })?;
-    Ok(())
+        }
+        return Ok(());
+    }
 }

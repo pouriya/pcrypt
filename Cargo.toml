@@ -5,6 +5,9 @@ edition = "2021"
 authors = ["pouriya.jahanbakhsh@gmail.com"]
 description = "A utility to Archive (zip) + Encrypt (AES-256) + Compress (Zstd) directory files and vice versa"
 
+[workspace.metadata.ci-tools]
+application_version = "26.02.13"
+
 [dependencies]
 # Commandline argument parser:
 clap = {version = "4.5.35", default-features = false, features = ["std", "derive", "help", "error-context"]}
@@ -27,6 +30,8 @@ default = []
 password-from-env = []
 
 [profile.release]
-opt-level = 3
-overflow-checks = false
-lto = true
+opt-level = 'z'     # Optimize for size.
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Reduce number of codegen units to increase optimizations.
+panic = 'abort'     # Abort on panic
+strip = true

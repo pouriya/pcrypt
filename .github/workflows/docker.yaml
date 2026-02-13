@@ -27,7 +27,7 @@ jobs:
       - name: Extract version
         id: version
         run: |
-          VERSION=$(awk -F'"' '/^version = /{print $2; exit}' Cargo.toml)
+          VERSION=$(awk -F'"' '/^application_version = /{print $2; exit}' Cargo.toml)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
 

@@ -2,17 +2,8 @@ name: Check
 
 on:
   push:
-    tags-ignore:
-      - "*.*.*"
-    paths-ignore:
-      - "**.md"
-    branches-ignore:
-      - "documentation"
-  pull_request:
     branches:
-      - "master"
-    paths-ignore:
-      - "**.md"
+      - "*"
 
 jobs:
   build:
@@ -22,83 +13,59 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-13
-            target: x86_64-apple-darwin
-            name: macOS 13 (x86-64)
-          - os: macos-14
-            target: x86_64-apple-darwin
-            name: macOS 14 (x86-64)
-          - os: macos-15
-            target: x86_64-apple-darwin
-            name: macOS 15 (x86-64)
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            name: macOS (arm64)
 
-          - os: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-            name: Ubuntu 22.04 GNU (x86-64)
-          - os: ubuntu-22.04
+          - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            name: Ubuntu 22.04 Musl (x86-64)
-          - os: ubuntu-24.04
-            target: x86_64-unknown-linux-gnu
-            name: Ubuntu 24.04 GNU (x86-64)
-          - os: ubuntu-24.04
-            target: x86_64-unknown-linux-musl
-            name: Ubuntu 24.04 Musl (x86-64)
+            name: Ubuntu Musl (x86-64)
 
-          - os: windows-2019
-            target: x86_64-pc-windows-gnu
-            name: Windows 2019 GNU (x86-64)
-          - os: windows-2019
+          - os: windows-latest
             target: x86_64-pc-windows-msvc
-            name: Windows 2019 MSVC (x86-64)
-          - os: windows-2022
-            target: x86_64-pc-windows-gnu
-            name: Windows 2022 GNU (x86-64)
-          - os: windows-2022
-            target: x86_64-pc-windows-msvc
-            name: Windows 2022 MSVC (x86-64)
-          - os: windows-2025
-            target: x86_64-pc-windows-gnu
-            name: Windows 2025 GNU (x86-64)
-          - os: windows-2025
-            target: x86_64-pc-windows-msvc
-            name: Windows 2025 MSVC (x86-64)
+            name: Windows MSVC (x86-64)
 
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: check-${{ matrix.os }}-${{ matrix.target }}
+
       - name: Installing macOS dependencies
         if: contains(matrix.os, 'macos-')
         run: |
-          brew install openssl@1.1
-          brew install make
-          rustup target add ${{ matrix.target }}
+          brew install openssl make
+
       - name: Installing Windows dependencies
         if: contains(matrix.os, 'windows-')
-        run: |
-          rustup target add ${{ matrix.target }}
-      - name: Installing Linux dependencies for `musl`
+        run: choco install make -y
+        shell: pwsh
+
+      - name: Installing Linux dependencies for musl
         if: contains(matrix.os, 'ubuntu-') && contains(matrix.target, '-musl')
         run: |
           sudo apt-get update
           sudo apt-get install -y -qq musl-dev musl-tools
-          rustup target add ${{ matrix.target }}
-          export TARGET_CC=x86_64-linux-musl-gcc
 
       - name: Lint
         run: make fmt TARGET=${{ matrix.target }}
 
       - name: Test
-        run: |
-          make test TARGET=${{ matrix.target }} EXE=pcrypt-${{ matrix.os }}-${{ matrix.target }}
-      
+        run: make test TARGET=${{ matrix.target }} EXE=pcrypt-${{ matrix.os }}-${{ matrix.target }}
+
       - name: Build
-        run: |
-          make prod TARGET=${{ matrix.target }} EXE=pcrypt-${{ matrix.os }}-${{ matrix.target }}
+        run: make release TARGET=${{ matrix.target }} EXE=pcrypt-${{ matrix.os }}-${{ matrix.target }}
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
           name: pcrypt-${{ matrix.os }}-${{ matrix.target }}
-          path: ./pcrypt-*
+          path: build/pcrypt-*
           retention-days: 10

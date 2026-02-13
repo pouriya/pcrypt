@@ -4,7 +4,7 @@ SHELL := bash
 
 TARGET=$(shell rustup target list | grep 'installed' | awk '$$1 != "" {print $$1; exit}')
 EXE=pcrypt
-VERSION=$(shell awk -F'"' '/^version = /{print $$2; exit}' Cargo.toml)
+VERSION=$(shell awk -F'"' '/^application_version = /{print $$2; exit}' Cargo.toml)
 BUILD_DIR=$(CURDIR)/build
 # Use = so TARGET override from command line is respected (e.g. Windows .exe)
 RELEASE_FILENAME_POSTFIX = $(if $(findstring windows,$(TARGET)),.exe,)

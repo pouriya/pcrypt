@@ -23,8 +23,11 @@ const READ_WRITE_BUFFER_SIZE: usize = 1048576;
 #[cfg(target_os = "windows")]
 const READ_WRITE_BUFFER_SIZE: usize = 524288;
 
+// Application version from Cargo.toml [workspace.metadata.ci-tools]
+const APPLICATION_VERSION: &str = env!("APPLICATION_VERSION");
+
 #[derive(Parser, Debug)]
-#[command(version, about, author, long_about = None)]
+#[command(version = APPLICATION_VERSION, about, author, long_about = None)]
 struct CommandLineOptions {
     #[command(subcommand)]
     command: Commands,

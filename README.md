@@ -4,6 +4,20 @@ A utility to Archive (zip) + Encrypt (AES-256) + Compress (Zstd) directory files
 ![pcrypt](https://github.com/user-attachments/assets/140c4ba1-bc08-41f9-8ea2-ee0f9adfbf70)
 
 
+## Download
+
+Latest builds (single binary, no install):
+
+| Platform | Download |
+|----------|----------|
+| **macOS** (Apple Silicon) | [pcrypt-aarch64-apple-darwin](https://github.com/pouriya/pcrypt/releases/latest/download/pcrypt-aarch64-apple-darwin) |
+| **Linux** (x86_64, musl) | [pcrypt-x86_64-unknown-linux-musl](https://github.com/pouriya/pcrypt/releases/latest/download/pcrypt-x86_64-unknown-linux-musl) |
+| **Windows** (x86_64) | [pcrypt-x86_64-pc-windows-msvc.exe](https://github.com/pouriya/pcrypt/releases/latest/download/pcrypt-x86_64-pc-windows-msvc.exe) |
+| **Docker** | [ghcr.io/pouriya/pcrypt](https://ghcr.io/pouriya/pcrypt) — `docker pull ghcr.io/pouriya/pcrypt:latest` |
+
+After download: make the file executable on macOS/Linux (`chmod +x pcrypt-...`). 
+
+
 # Usage
 ```sh
 ~ $ pcrypt --help
@@ -70,7 +84,3 @@ Arguments:
 Options:
   -h, --help  Print help
 ```
-
-
-# Installation
-Download & Extract (& `chmod` on unix) executables from [Release page](https://github.com/pouriya/pcrypt/releases).

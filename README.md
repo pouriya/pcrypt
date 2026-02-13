@@ -1,7 +1,7 @@
 # PCrypt
 A utility to Archive (zip) + Encrypt (AES-256) + Compress (Zstd) directory files and vice versa
 
-![pcrypt](https://github.com/user-attachments/assets/140c4ba1-bc08-41f9-8ea2-ee0f9adfbf70)
+![pcrypt](https://github.com/user-attachments/assets/221d1122-5fd9-4b65-8518-cfcc163dd4c3)
 
 
 ## Download
